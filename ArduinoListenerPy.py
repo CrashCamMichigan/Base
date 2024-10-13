@@ -1,31 +1,39 @@
-#!/usr/bin/python3
+import cv2
+import base64
+import time  # Import the time module
+from pymongo import MongoClient
+from datetime import datetime
+import pytz  # Import pytz for time zone handling
+import os
+from dotenv import load_dotenv
 
-# ============================================
-# code is placed under the MIT license
-#  Copyright (c) 2023 J-M-L
-#  For the Arduino Forum : https://forum.arduino.cc/u/j-m-l
-#
-#  Permission is hereby granted, free of charge, to any person obtaining a copy
-#  of this software and associated documentation files (the "Software"), to deal
-#  in the Software without restriction, including without limitation the rights
-#  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-#  copies of the Software, and to permit persons to whom the Software is
-#  furnished to do so, subject to the following conditions:
-#
-#  The above copyright notice and this permission notice shall be included in
-#  all copies or substantial portions of the Software.
-#
-#  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-#  IMPLIED, INCLUDING BUT NOT
+load_dotenv()
 
-#  LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-#  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-#  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-#  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-#  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-#  THE SOFTWARE.
-#  ===============================================
+# MongoDB Atlas credentials
+MONGO_PASSWORD = os.getenv('MONGO_PASSWORD')
+print(MONGO_PASSWORD)
+username = "crash1"
+password = MONGO_PASSWORD
+dbname = "my_database"  # Change to your desired database name
 
+# Create a connection string
+connection_string = f"mongodb+srv://{username}:{password}@cluster1.ztedo.mongodb.net/{dbname}?retryWrites=true&w=majority&appName=Cluster1"
+
+# Create a MongoClient to connect to MongoDB
+client = MongoClient(connection_string)
+
+# Access the database
+db = client[dbname]
+
+# Check the connection by listing the collections in the database
+collections = db.list_collection_names()
+print("Collections in the database:", collections)
+
+# Access the collection where you want to insert documents
+sample_collection = db['Data']  # Replace with your collection name
+
+# Set the timezone to Eastern Time
+eastern = pytz.timezone('US/Eastern')
 
 import sys, threading, queue, serial
 import serial.tools.list_ports
@@ -91,6 +99,18 @@ def handleLocalMessage(aMessage):
     arduino.write(bytes('\n', encoding='utf-8'))
 
 def handleArduinoMessage(aMessage):
+    now = datetime.now(eastern)
+    now = now.replace(microsecond=0)  # Round to seconds
+
+    # Prepare the document for MongoDB
+    sample_document = {
+        "image": int(aMessage),  # Store the encoded image
+        "Time": now  # Use the current time in Eastern Time
+    }
+
+    # Insert the document into MongoDB
+    insert_result = sample_collection.insert_one(sample_document)
+    print(insert_result)
     print("<= [" + aMessage + "]")
 
 # ---- MAIN CODE -----
