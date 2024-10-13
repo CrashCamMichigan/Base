@@ -43,7 +43,7 @@ void setup() {
 void loop() {
   // read the sensor and store it in the variable sensorReading:
   sensorReading = analogRead(knockSensor);
-
+  Serial.println(sensorReading);
   // if the sensor reading is greater than the threshold:
   if (sensorReading >= threshold) {
     // toggle the status of the ledPin:
@@ -51,7 +51,7 @@ void loop() {
     // update the LED pin itself:
     digitalWrite(ledPin, ledState);
     // send the string "Knock!" back to the computer, followed by newline
-    Serial.println("Knock!");
+    //Serial.println("Knock!");
   }
     if (Serial.available())
     Serial.write(Serial.read());
